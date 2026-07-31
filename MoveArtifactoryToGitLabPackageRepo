@@ -3,46 +3,21 @@
 
 ## Prerequisites
 
-### 1. DoD Root Certificates
-
-All HTTPS calls to `.cce.af.mil` hostnames require DoD root certificates installed. If you get an SSL error, run `dodroot.sh` first.
-
-**Check if certs are installed:**
-```bash
-curl https://gitlab.cce.af.mil -o /dev/null -s -w "%{http_code}"
-# Should return 200 or 302 — anything else means certs need installing
-```
-
-**WSL users:** Run `dodroot.sh` inside WSL, not in Windows PowerShell — the cert stores are separate.
-
-**Non-WSL (native Linux/Mac):** Run `dodroot.sh` directly.
-
-### 2. Environment Variables
-
-Set these once at the start of every session. All commands in this guide use these variables — do not hardcode tokens into commands.
 
 ```bash
 # Artifactory
 export ARTIFACTORY_TOKEN='your-artifactory-bearer-token'
-export ARTIFACTORY_URL='https://artifact.dev.azure.cce.af.mil'
+export ARTIFACTORY_URL='your artifactory url'
 
 # GitLab
 export PAT='your-gitlab-personal-access-token'
-export GITLAB_URL='https://gitlab.cce.af.mil'
-export GITLAB_REGISTRY='gitlab-registry.cce.af.mil'
+export GITLAB_URL='your gitlab url'
+export GITLAB_REGISTRY='your gitlab registry'
 
 # GitLab project to publish packages into
 # Create a dedicated package project in group 960 first if one doesn't exist
 export GL_PROJECT_ID='<your-package-project-id>'
 ```
-
-**Get your Artifactory token:**
-GitLab → Group 960 → Settings → CI/CD → Variables → look for `artifactoryApiKey` or `artifactorySecret`
-or 
-1. Login to the deveploment Azure portal through gaucamole.  
-1. Browse to the GVCMNSVCDIL4KVT key vault.
-1. Grant yourself secret access in the access policy
-1. Copy the artifactoryToken and use that in teh export.
 
 **Get/create your GitLab PAT:**
 GitLab → Profile → Access Tokens → create with `api` scope
@@ -65,7 +40,7 @@ Navigate to the package project in GitLab — the ID is shown under the project 
 
 ```bash
 export DIR='yourDirectoryName' example export DIR='ansible'
-export TOP='topLevel' example: export TOP='CMNSVC'
+export TOP='topLevel' example: export TOP='example'
 ```
 1. Create the following scripts and grant execute permissions on the scripts in your heom directory or whereever you plan to run scripts from.
 
