@@ -1,0 +1,138 @@
+## Purpose
+    This document serves to provide basic scripts and a process to move an entire Artifactory directory to a GitLab project package repository.  This process is meant to be run on a local WSL installation.
+
+## Prerequisites
+
+### 1. DoD Root Certificates
+
+All HTTPS calls to `.cce.af.mil` hostnames require DoD root certificates installed. If you get an SSL error, run `dodroot.sh` first.
+
+**Check if certs are installed:**
+```bash
+curl https://gitlab.cce.af.mil -o /dev/null -s -w "%{http_code}"
+# Should return 200 or 302 — anything else means certs need installing
+```
+
+**WSL users:** Run `dodroot.sh` inside WSL, not in Windows PowerShell — the cert stores are separate.
+
+**Non-WSL (native Linux/Mac):** Run `dodroot.sh` directly.
+
+### 2. Environment Variables
+
+Set these once at the start of every session. All commands in this guide use these variables — do not hardcode tokens into commands.
+
+```bash
+# Artifactory
+export ARTIFACTORY_TOKEN='your-artifactory-bearer-token'
+export ARTIFACTORY_URL='https://artifact.dev.azure.cce.af.mil'
+
+# GitLab
+export PAT='your-gitlab-personal-access-token'
+export GITLAB_URL='https://gitlab.cce.af.mil'
+export GITLAB_REGISTRY='gitlab-registry.cce.af.mil'
+
+# GitLab project to publish packages into
+# Create a dedicated package project in group 960 first if one doesn't exist
+export GL_PROJECT_ID='<your-package-project-id>'
+```
+
+**Get your Artifactory token:**
+GitLab → Group 960 → Settings → CI/CD → Variables → look for `artifactoryApiKey` or `artifactorySecret`
+or 
+1. Login to the deveploment Azure portal through gaucamole.  
+1. Browse to the GVCMNSVCDIL4KVT key vault.
+1. Grant yourself secret access in the access policy
+1. Copy the artifactoryToken and use that in teh export.
+
+**Get/create your GitLab PAT:**
+GitLab → Profile → Access Tokens → create with `api` scope
+
+**Find your GitLab project ID:**
+Navigate to the package project in GitLab — the ID is shown under the project name on the main page.
+
+### 3. Required tools
+
+| Tool | Required for | Install |
+|---|---|---|
+| `curl` | All types | Pre-installed on most systems |
+| `jq` | Artifactory queries | `sudo apt install jq` |
+
+
+## Process
+
+1. Set up your exports above
+1. Set the Directory and your top level from artifactory that you want to export.  
+
+```bash
+export DIR='yourDirectoryName' example export DIR='ansible'
+export TOP='topLevel' example: export TOP='CMNSVC'
+```
+1. Create the following scripts and grant execute permissions on the scripts in your heom directory or whereever you plan to run scripts from.
+
+download.sh
+```bash
+jq -r '.files[].uri' listing.json | while read -r file; do
+    local_path=".$file"
+    mkdir -p "$(dirname "$local_path")"
+
+    echo "Downloading $file → $local_path"
+
+    curl -H "Authorization: Bearer $ARTIFACTORY_TOKEN" \
+         -o "$local_path" \
+         "$ARTIFACTORY_URL/artifactory$file"
+done
+```
+upload.sh
+```bash
+#!/bin/bash
+
+BASE="$GITLAB_URL/api/v4/projects/$GL_PROJECT_ID/packages/generic/$DIR"
+VERSION="1.0"
+
+find "$DIR" -type f | while read -r file; do
+    RELATIVE_PATH="${file#$DIR/}"
+
+    echo "Uploading $file → $RELATIVE_PATH"
+
+    curl --header "PRIVATE-TOKEN: $PAT" \
+         --upload-file "$file" \
+         "$BASE/$VERSION/$RELATIVE_PATH"
+done
+```
+prep.sh
+```bash
+#!/bin/bash
+
+mkdir $DIR
+cp test.sh $DIR
+
+curl -H "Authorization: Bearer $ARTIFACTORY_TOKEN" \
+     "$ARTIFACTORY_URL/artifactory/api/storage/$TOP/$DIR?list&deep=1" \
+     -o $DIR/listing.json
+cd $DIR
+
+bash download.sh
+```
+post.sh
+```bash
+#!/bin/bash
+
+rm -f $DIR/download.sh
+rm -f $DIR/listing.json
+
+cd ~
+```
+## Run the scripts in the following order after setting your exports
+
+```bash
+sudo prep.sh
+sudo post.sh
+sudo download.sh
+sudo upload.sh
+```
+
+**Note: If you run these scripts from somewhere otehr than your home directory you will need to update the change directory command in the post.sh script to be that directory.
+
+
+
+
