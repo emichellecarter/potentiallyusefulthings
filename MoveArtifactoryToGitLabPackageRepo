@@ -46,15 +46,36 @@ export TOP='topLevel' example: export TOP='example'
 
 download.sh
 ```bash
+#!/bin/bash
+
+# Extract the real repo path from the storage URI
+ROOT_URI=$(jq -r '.uri' listing.json)
+ROOT_PATH=$(echo "$ROOT_URI" | sed 's|.*api/storage/||')
+
+echo "DEBUG: ROOT_PATH = $ROOT_PATH"
+
 jq -r '.files[].uri' listing.json | while read -r file; do
-    local_path=".$file"
+    # Strip leading slash reliably
+    CLEAN_FILE="$(basename "$file")"
+
+    # Build the correct binary path
+    FULL_PATH="$ROOT_PATH$file"
+
+    # Preserve directory structure locally
+    local_path="$FULL_PATH"
+    echo $local_path
     mkdir -p "$(dirname "$local_path")"
 
-    echo "Downloading $file → $local_path"
+    # Binary endpoint only
+    DOWNLOAD_URL="$ARTIFACTORY_URL/artifactory/$FULL_PATH"
+
+    echo "DEBUG: CLEAN_FILE    = $CLEAN_FILE"
+    echo "DEBUG: FULL_PATH     = $FULL_PATH"
+    echo "DEBUG: DOWNLOAD_URL  = $DOWNLOAD_URL"
 
     curl -H "Authorization: Bearer $ARTIFACTORY_TOKEN" \
-         -o "$local_path" \
-         "$ARTIFACTORY_URL/artifactory$file"
+         -o "$FULL_PATH" \
+         "$DOWNLOAD_URL"
 done
 ```
 upload.sh
