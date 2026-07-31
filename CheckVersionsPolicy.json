@@ -1,0 +1,124 @@
+{
+  "properties": {
+    "displayName": "evaluateLinuxOSVersions",
+    "policyType": "Custom",
+    "mode": "Indexed",
+    "description": "Evaluates approved Linux publishers for versions that are end of life",
+    "metadata": {
+      "category": "Compute",
+      "createdBy": "1ba6f7df-5c00-486c-8470-c72f110d4a65",
+      "createdOn": "2024-09-19T14:26:14.7103861Z",
+      "updatedBy": null,
+      "updatedOn": null
+    },
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "field": "type",
+                "equals": "Microsoft.Compute/virtualMachines"
+              },
+              {
+                "allOf": [
+                  {
+                    "field": "Microsoft.Compute/imagePublisher",
+                    "equals": "Canonical"
+                  },
+                  {
+                    "field": "Microsoft.Compute/imageOffer",
+                    "equals": "UbuntuServer"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "field": "Microsoft.Compute/imageSku",
+                        "like": "14.04*LTS"
+                      },
+                      {
+                        "field": "Microsoft.Compute/imageSku",
+                        "like": "16.04*LTS"
+                      },
+                      {
+                        "field": "Microsoft.Compute/imageSku",
+                        "like": "18.04*LTS"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "field": "type",
+                "equals": "Microsoft.Compute/virtualMachines"
+              },
+              {
+                "allOf": [
+                  {
+                    "field": "Microsoft.Compute/imagePublisher",
+                    "equals": "OpenLogic"
+                  },
+                  {
+                    "field": "Microsoft.Compute/imageOffer",
+                    "like": "Centos*"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "field": "type",
+                "equals": "Microsoft.Compute/virtualMachines"
+              },
+              {
+                "allOf": [
+                  {
+                    "field": "Microsoft.Compute/imagePublisher",
+                    "equals": "RedHat"
+                  },
+                  {
+                    "field": "Microsoft.Compute/imageOffer",
+                    "in": [
+                      "RHEL",
+                      "RHEL-SAP-HANA"
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "field": "Microsoft.Compute/imageSku",
+                        "less": "8_7"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "effect": "audit"
+      }
+    }
+  },
+  "id": "/providers/Microsoft.Management/managementGroups/WCOINE/providers/Microsoft.Authorization/policyDefinitions/4d27-8505-823bcb9208bf",
+  "type": "Microsoft.Authorization/policyDefinitions",
+  "name": "505-823bcb9208bf",
+  "systemData": {
+    "createdBy": "evelyn.carter",
+    "createdByType": "User",
+    "createdAt": "2024-09-19T14:26:14.6368456Z",
+    "lastModifiedBy": "evelyn.carter",
+    "lastModifiedByType": "User",
+    "lastModifiedAt": "2024-09-19T14:26:14.6368456Z"
+  }
+}
+ 
