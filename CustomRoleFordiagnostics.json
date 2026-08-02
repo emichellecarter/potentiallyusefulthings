@@ -1,0 +1,21 @@
+{
+    "properties": {
+        "roleName": "AzurePolicy-AddDiagnosticsRole",
+        "description": "",
+        "assignableScopes": [
+            "<your scope>"
+        ],
+        "permissions": [
+            {
+                "actions": [
+                    "Microsoft.Resources/deployments/write",
+                    "Microsoft.Insights/diagnosticSettings/write",
+                    "Microsoft.OperationalInsights/workspaces/sharedkeys/action"
+                ],
+                "notActions": [],
+                "dataActions": [],
+                "notDataActions": []
+            }
+        ]
+    }
+}
